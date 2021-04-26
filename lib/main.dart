@@ -228,7 +228,7 @@ class _GamePageState extends State<GamePage> {
           }
 
           currentData['players'][ownColorName]['state'] = 'ready';
-          for (int i = 0; i < 350; i++) {
+          for (int i = 0; i < 500; i++) {
             if (mySkyService.isLoggedIn.value != null) {
               print('[waited for login] ${i * 20}ms');
               break;
@@ -638,6 +638,8 @@ class _GamePageState extends State<GamePage> {
             8 -
         8;
 
+    final isMobile = MediaQuery.of(context).size.width < maxBoardHeight + 100;
+
     if (pieceWidgets == null) {
       renderPieces();
     }
@@ -653,7 +655,7 @@ class _GamePageState extends State<GamePage> {
         body: Row(
           // mainAxisSize: widget.fullUI ? MainAxisSize.max : MainAxisSize.min,
           children: [
-            if (widget.fullUI)
+            if (widget.fullUI && !isMobile)
               Expanded(
                   child: gameDone
                       ? Center(
@@ -664,29 +666,39 @@ class _GamePageState extends State<GamePage> {
               constraints: BoxConstraints(
                   maxWidth: /* min(widget.availableWidth ?? double.infinity, */
                       maxBoardHeight),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  if (widget.fullUI) ...[
-                    Expanded(
-                      child: SizedBox(),
-                    ),
-                    _buildUserRow(
-                      ownColor == c.Color.WHITE ? c.Color.BLACK : c.Color.WHITE,
-                    ),
-                    SizedBox(
-                      height: 8,
-                    ),
-                  ],
-                  ConstrainedBox(
-                    constraints: BoxConstraints(
-                      maxHeight: min(
-                        widget.availableWidth ?? double.infinity,
-                        maxBoardHeight,
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxWidth: min(
+                    widget.availableWidth ?? MediaQuery.of(context).size.width,
+                    maxBoardHeight,
+                  ),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (widget.fullUI && isMobile)
+                      Expanded(
+                          child: gameDone
+                              ? Center(
+                                  child: _buildGameDoneWidget(),
+                                )
+                              : SizedBox()),
+                    if (widget.fullUI) ...[
+                      if (!isMobile)
+                        Expanded(
+                          child: SizedBox(),
+                        ),
+                      _buildUserRow(
+                        ownColor == c.Color.WHITE
+                            ? c.Color.BLACK
+                            : c.Color.WHITE,
                       ),
-                    ),
-                    child: AspectRatio(
+                      SizedBox(
+                        height: 8,
+                      ),
+                    ],
+                    AspectRatio(
                       aspectRatio: 1,
                       /* width: 200,
                             height: 200, */
@@ -771,39 +783,60 @@ class _GamePageState extends State<GamePage> {
                         ],
                       ),
                     ),
-                  ),
-                  if (widget.fullUI) ...[
-                    SizedBox(
-                      height: 8,
-                    ),
-                    _buildUserRow(
-                      ownColor,
-                    ),
-                    Expanded(
-                      child: SizedBox(),
-                    ),
+                    if (widget.fullUI) ...[
+                      SizedBox(
+                        height: 8,
+                      ),
+                      _buildUserRow(
+                        ownColor,
+                      ),
+                      if (isMobile) ...[
+                        Expanded(
+                          child: Center(
+                            child: Padding(
+                              padding: const EdgeInsets.all(32.0),
+                              child: SelectableText(
+                                (opening == null
+                                        ? ''
+                                        : 'Opening: ${opening.eco} ${opening.name}\n\n') +
+                                    san,
+                              ),
+                            ),
+                          ),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: Row(
+                            children: [
+                              buildCopyWatchOnlyButton(),
+                              Spacer(),
+                              if (!widget.isPlaying && gameDone)
+                                _buildGameNavigationArrows(),
+                              if (gameDone && widget.isPlaying)
+                                _buildPublishGameWidget(context),
+                            ],
+                          ),
+                        )
+                      ],
+                      if (!isMobile)
+                        Expanded(
+                          child: SizedBox(),
+                        ),
+                    ],
                   ],
-                ],
+                ),
               ),
             ),
             /*   ],
             ), */
 
-            if (widget.fullUI)
+            if (widget.fullUI && !isMobile)
               Expanded(
                 child: Center(
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      SkyButton(
-                        onPressed: () {
-                          FlutterClipboard.copy(
-                                  '${window.location.protocol}//${window.location.host}/#/watch/${skynetUser.id}')
-                              .then((value) => print('copied'));
-                        },
-                        child: Text('Copy public watch-only link'),
-                        color: SkyColors.follow,
-                      ),
+                      buildCopyWatchOnlyButton(),
                       /*     ElevatedButton(
                           onPressed: () {
                             moveWithStockfish();
@@ -815,120 +848,136 @@ class _GamePageState extends State<GamePage> {
                         child: SelectableText(
                           (opening == null
                                   ? ''
-                                  : 'Opening: ${opening.eco} ${opening.name}') +
-                              '\n\n' +
-                              fen +
-                              '\n\n' +
+                                  : 'Opening: ${opening.eco} ${opening.name}\n\n') +
+                              /* '\n\n' +
+                              fen + */
+                              /* '\n\n' + */
                               san,
                         ),
                       ),
                       if (!widget.isPlaying && gameDone)
-                        Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            IconButton(
-                              icon: Icon(
-                                FontAwesomeIcons.arrowLeft,
-                              ),
-                              onPressed: chess.history.isEmpty
-                                  ? null
-                                  : () {
-                                      final move = chess.undo_move();
-                                      undoneMoves.add(chess.move_to_san(move));
-                                      generateStateDisplay();
-
-                                      renderPieces();
-                                      setState(() {});
-                                    },
-                            ),
-                            SizedBox(
-                              width: 16,
-                            ),
-                            IconButton(
-                              icon: Icon(
-                                FontAwesomeIcons.arrowRight,
-                              ),
-                              onPressed: undoneMoves.isEmpty
-                                  ? null
-                                  : () {
-                                      chess.move(undoneMoves.removeLast());
-
-                                      generateStateDisplay();
-
-                                      // possibleMoveWidgets = [];
-                                      renderPieces();
-                                      setState(() {});
-                                    },
-                            ),
-                          ],
-                        ),
+                        _buildGameNavigationArrows(),
                       if (gameDone && widget.isPlaying)
-                        SkyButton(
-                          color: SkyColors.follow,
-                          filled: true,
-                          child: Text('Publish Game'),
-                          onPressed: () async {
-                            showLoadingDialog(context, 'Publishing game...');
-                            try {
-                              generateStateDisplay();
-
-                              currentData['fen'] = fen;
-                              currentData['san'] = san;
-                              await saveGame();
-
-                              final gameId = skynetUser.id;
-
-                              final opponentColor =
-                                  ownColorName == 'black' ? 'white' : 'black';
-
-                              final userId = currentData['players']
-                                  [opponentColor]['userId'];
-
-                              final profile = await mySkyService.profileDAC
-                                  .getProfile(userId);
-                              final username = profile?.username ?? 'Anonymous';
-
-                              final map = Map.from(currentData);
-                              map['gameId'] = gameId;
-                              map['endState'] = buildEndState();
-                              map['opening'] = opening.toJson();
-
-                              final ref = await mySkyService.feedDAC.createPost(
-                                PostContent(
-                                  ext: {
-                                    'skychess': map,
-                                  },
-                                  link:
-                                      'sia://skychess.hns/#/watch/$gameId', // TODO Change final domain to SkyChess
-                                  // TODO Maybe add screenshot plugin to create image
-                                  // TODO maybe create gif or video of game
-                                  tags: ['skychess'],
-                                  text:
-                                      '', // TODO Add turn count, endgame state and opening name to title or text
-                                  // TODO Add game variant and time settings to title or text
-                                  textContentType: 'text/plain',
-                                  title: 'Chess Game vs $username',
-                                  // TODO topics: '', maybe add chess
-                                ),
-                              );
-                              print(ref);
-                              /*    } */
-                              context.pop();
-                              showSuccessDialog(
-                                  context, 'Game posted successfully.');
-                            } catch (e, st) {
-                              print(e);
-                              context.pop();
-                              showErrorDialog(context, e, st);
-                            }
-                          },
-                        ),
+                        _buildPublishGameWidget(context),
                     ],
                   ),
                 ),
               ),
           ],
         ));
+  }
+
+  Row _buildGameNavigationArrows() {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        IconButton(
+          icon: Icon(
+            FontAwesomeIcons.arrowLeft,
+          ),
+          onPressed: chess.history.isEmpty
+              ? null
+              : () {
+                  final move = chess.undo_move();
+                  undoneMoves.add(chess.move_to_san(move));
+                  generateStateDisplay();
+
+                  renderPieces();
+                  setState(() {});
+                },
+        ),
+        SizedBox(
+          width: 16,
+        ),
+        IconButton(
+          icon: Icon(
+            FontAwesomeIcons.arrowRight,
+          ),
+          onPressed: undoneMoves.isEmpty
+              ? null
+              : () {
+                  chess.move(undoneMoves.removeLast());
+
+                  generateStateDisplay();
+
+                  // possibleMoveWidgets = [];
+                  renderPieces();
+                  setState(() {});
+                },
+        ),
+      ],
+    );
+  }
+
+  SkyButton _buildPublishGameWidget(BuildContext context) {
+    return SkyButton(
+      color: SkyColors.follow,
+      filled: true,
+      child: Text('Publish Game'),
+      onPressed: () async {
+        showLoadingDialog(context, 'Publishing game...');
+        try {
+          generateStateDisplay();
+
+          currentData['fen'] = fen;
+          currentData['san'] = san;
+          await saveGame();
+
+          final gameId = skynetUser.id;
+
+          final opponentColor = ownColorName == 'black' ? 'white' : 'black';
+
+          final userId = currentData['players'][opponentColor]['userId'];
+
+          final profile = await mySkyService.profileDAC.getProfile(userId);
+          final username = profile?.username ?? 'Anonymous';
+
+          final map = Map.from(currentData);
+          map['gameId'] = gameId;
+          map['endState'] = buildEndState();
+          map['opening'] = opening.toJson();
+
+          final ref = await mySkyService.feedDAC.createPost(
+            PostContent(
+              ext: {
+                'skychess': map,
+              },
+              link:
+                  'sia://skychess.hns/#/watch/$gameId', // TODO Change final domain to SkyChess
+              // TODO Maybe add screenshot plugin to create image
+              // TODO maybe create gif or video of game
+              tags: ['skychess'],
+              text:
+                  '', // TODO Add turn count, endgame state and opening name to title or text
+              // TODO Add game variant and time settings to title or text
+              textContentType: 'text/plain',
+              title: 'Chess Game vs $username',
+              // TODO topics: '', maybe add chess
+            ),
+          );
+          print(ref);
+          /*    } */
+          context.pop();
+          showSuccessDialog(context, 'Game posted successfully.');
+        } catch (e, st) {
+          print(e);
+          context.pop();
+          showErrorDialog(context, e, st);
+        }
+      },
+    );
+  }
+
+  SkyButton buildCopyWatchOnlyButton() {
+    return SkyButton(
+      onPressed: () {
+        FlutterClipboard.copy(
+                '${window.location.protocol}//${window.location.host}/#/watch/${skynetUser.id}')
+            .then((value) => print('copied'));
+      },
+      child: Text('Copy public watch-only link'),
+      color: SkyColors.follow,
+    );
   }
 
   final undoneMoves = <String>[];

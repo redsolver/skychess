@@ -32,6 +32,8 @@ class _UserPageState extends State<UserPage> {
   List<Post> allGames;
   @override
   Widget build(BuildContext context) {
+    final isMobile = MediaQuery.of(context).size.width < maxBoardHeight;
+
     return Scaffold(
       appBar: buildSkyChessAppBar(context, 'User'),
       body: Center(
@@ -89,73 +91,104 @@ class _UserPageState extends State<UserPage> {
 
               final gameId = ext['gameId'] ?? game.content.link.split('/').last;
 
-              final size = 300.0;
+              final size = isMobile ? 150 : 300.0;
+              final metadataWidget = Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                      '${dateFormat.format(DateTime.fromMillisecondsSinceEpoch(game.ts))}\n'),
+                  Text(
+                      'Variant: ${ext['settings']['variant']}\nTime Control: ${ext['settings']['timeControl']}\n'),
+                  if (ext.containsKey('opening'))
+                    Text(
+                        'Opening: ${ext['opening']['eco']} ${ext['opening']['name']}\n'),
+                  if (ext.containsKey('san')) Text(ext['san']),
+                  // Text(ext.toString()),
+                ],
+              );
 
               return InkWell(
                 borderRadius: borderRadius,
                 onTap: () => context.beamToNamed('/watch/$gameId'),
                 child: Padding(
                   padding: const EdgeInsets.all(8.0),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      SizedBox(
-                        width: size,
-                        height: size,
-                        child: GamePage(
-                          false,
-                          staticFen: game.content.ext['skychess']['fen'],
-                          fullUI: false,
-                          availableWidth: size,
-                        ),
-                      ),
-                      Column(
+                      Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          const SizedBox(
-                            height: 8,
-                          ),
-                          UserWidget(ext['players']['black']['userId']),
                           SizedBox(
-                            height: size - 48 * 2 - 8 * 2,
-                            child: ext['endState'] == null
-                                ? null
-                                : Center(
-                                    child: Padding(
-                                      padding: const EdgeInsets.only(left: 8.0),
-                                      child: GameEndedWidget(
-                                        ext['endState'],
-                                        showTitle: false,
-                                      ),
+                            width: size,
+                            height: size,
+                            child: GamePage(
+                              false,
+                              staticFen: game.content.ext['skychess']['fen'],
+                              fullUI: false,
+                              availableWidth: size,
+                            ),
+                          ),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              const SizedBox(
+                                height: 8,
+                              ),
+                              UserWidget(ext['players']['black']['userId']),
+                              isMobile
+                                  ? SizedBox(
+                                      height: size - 48 * 2 - 8 * 2,
+                                    )
+                                  : SizedBox(
+                                      height: size - 48 * 2 - 8 * 2,
+                                      child: ext['endState'] == null
+                                          ? null
+                                          : Center(
+                                              child: Padding(
+                                                padding: const EdgeInsets.only(
+                                                    left: 8.0),
+                                                child: GameEndedWidget(
+                                                  ext['endState'],
+                                                  showTitle: false,
+                                                ),
+                                              ),
+                                            ),
                                     ),
-                                  ),
+                              UserWidget(ext['players']['white']['userId']),
+                              const SizedBox(
+                                height: 8,
+                              ),
+                            ],
                           ),
-                          UserWidget(ext['players']['white']['userId']),
-                          const SizedBox(
-                            height: 8,
-                          ),
+                          if (!isMobile) ...[
+                            SizedBox(
+                              width: 16,
+                            ),
+                            Flexible(
+                              child: metadataWidget,
+                            ),
+                          ]
                         ],
                       ),
-                      SizedBox(
-                        width: 16,
-                      ),
-                      Flexible(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                      if (isMobile) ...[
+                        Row(
                           children: [
-                            Text(
-                                '${dateFormat.format(DateTime.fromMillisecondsSinceEpoch(game.ts))}\n'),
-                            Text(
-                                'Variant: ${ext['settings']['variant']}\nTime Control: ${ext['settings']['timeControl']}\n'),
-                            if (ext.containsKey('opening'))
-                              Text(
-                                  'Opening: ${ext['opening']['eco']} ${ext['opening']['name']}\n'),
-                            if (ext.containsKey('san')) Text(ext['san']),
-                            // Text(ext.toString()),
+                            Flexible(child: metadataWidget),
+                            if (ext['endState'] != null)
+                              Padding(
+                                padding: const EdgeInsets.only(left: 8.0),
+                                child: GameEndedWidget(
+                                  ext['endState'],
+                                  showTitle: false,
+                                ),
+                              ),
                           ],
                         ),
-                      ),
+                        SizedBox(
+                          height: 16,
+                        ),
+                      ]
                     ],
                   ),
                 ),

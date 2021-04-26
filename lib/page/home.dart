@@ -19,31 +19,35 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
+    final isMobile = MediaQuery.of(context).size.width < maxBoardHeight;
+
     return Scaffold(
       appBar: buildSkyChessAppBar(context),
       body: Row(
         children: [
-          SizedBox(
-            width: 300,
-            child: ListView(
-              padding: const EdgeInsets.all(16),
-              children: [
-                Text(
-                  'Player List',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
+          if (!isMobile)
+            SizedBox(
+              width: 300,
+              child: ListView(
+                padding: const EdgeInsets.all(16),
+                children: [
+                  Text(
+                    'Player List',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
-                ),
-                Text('Currently hard-coded, dynamic soon with the Social DAC'),
-                SizedBox(
-                  height: 12,
-                ),
-                UserWidget(
-                    '611f0e3730c028d618362aaaa19b00aa50bdf31480c627baf006abcc88f1c97a'),
-              ],
+                  Text(
+                      'Currently hard-coded, will get dynamic soon with the new Social DAC'),
+                  SizedBox(
+                    height: 12,
+                  ),
+                  UserWidget(
+                      '611f0e3730c028d618362aaaa19b00aa50bdf31480c627baf006abcc88f1c97a'),
+                ],
+              ),
             ),
-          ),
           Expanded(
             child: Center(
               child: SkyButton(

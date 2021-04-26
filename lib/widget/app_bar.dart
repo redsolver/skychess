@@ -10,7 +10,8 @@ PreferredSizeWidget buildSkyChessAppBar(BuildContext context, [String path]) {
         ? IconButton(
             icon: Icon(FontAwesomeIcons.home),
             onPressed: () {
-              Navigator.of(context).pop();
+              context.beamToNamed('/');
+              // Navigator.of(context).pop();
             })
         : null,
     title: Text(path == null ? 'SkyChess' : 'SkyChess / $path'),

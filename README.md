@@ -16,9 +16,7 @@ Decentralized Multiplayer Chess on Skynet. Play chess games in real-time, publis
 
 ## Try it
 
-Try it here: https://skytter.hns.siasky.net/
-
-_The HNS domain will be changed to `skychess/` soon_
+Try it here: https://skychess.hns.siasky.net/
 
 User page example: https://skytter.hns.siasky.net/#/user/611f0e3730c028d618362aaaa19b00aa50bdf31480c627baf006abcc88f1c97a
 
